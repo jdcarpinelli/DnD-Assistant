@@ -29,7 +29,7 @@ end
 # unset irrelevant variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/joe/Documents/DnD-Assistant/Environment/dnd-assistant-env"
+set -gx VIRTUAL_ENV "/Users/joe/Documents/DnD-Assistant/.DND_ASSISTANT_ENV"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
@@ -52,8 +52,8 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         set -l old_status $status
 
         # Prompt override?
-        if test -n "(dnd-assistant-env) "
-            printf "%s%s" "(dnd-assistant-env) " (set_color normal)
+        if test -n "(.DND_ASSISTANT_ENV) "
+            printf "%s%s" "(.DND_ASSISTANT_ENV) " (set_color normal)
         else
             # ...Otherwise, prepend env
             set -l _checkbase (basename "$VIRTUAL_ENV")
