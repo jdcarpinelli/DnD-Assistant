@@ -15,11 +15,16 @@ import sys, os, time, random
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import dice 
 
 # Load token, server name from local file
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
+TOP_LEVEL_PATH = os.getenv('TOP_LEVEL_PATH')
+
+def get_timestamp():
+    return str(int(time.time()*10e3))
 
 # Create bot
 bot = commands.Bot(command_prefix='!')
@@ -39,7 +44,10 @@ async def on_ready():
 # On event error
 @bot.event
 async def on_error(event, *args, **kwargs):
-    with open('logs/err'+str(int(time.time()*10e3))+'.log', 'a') as f:
+    with open(
+        TOP_LEVEL_PATH + 'assistant/logs/err' + get_timestamp() + '.log', 
+        'a'
+    ) as f:
         if event == 'on_message':
             f.write(f'Unhandled message: {args[0]}\n')
         else:
@@ -48,7 +56,13 @@ async def on_error(event, *args, **kwargs):
 # On command error
 @bot.event
 async def on_command_error(ctx, error):
-    await ctx.send('Invalid argument. Use "!help command" to find the proper usage.')
+    errors_map = map(commands.errors.__dict__.get, commands.errors.__all__)
+    for error_type in errors_map:
+        if error == error_type:
+            print('ERROR: ', error_type)
+    await ctx.send(
+        'Invalid argument. '
+        'Use "!help command" to find the proper usage.\n'+str(error_type))
 
 # Silly function
 @bot.command(name='99', help='Responds with a random quote from Brooklyn 99')
@@ -67,16 +81,8 @@ async def nine_nine(ctx):
 
 # Roll dice
 @bot.command(name='roll', help='Rolls 4, 6, 8, 10, 12, or 20 sided die.\n Examples: !roll 20 or !roll 3d6')
-async def roll(ctx, roll_cmd):
-    '''
-    dice = [
-        str(random.choice(range(1, number_of_sides + 1)))
-        for _ in range(number_of_dice)
-    ]
-    await ctx.send(', '.join(dice))
-    '''
-    
-    
+async def roll(ctx, *args):   
+    await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
 
 if __name__ == '__main__':
     bot.run(TOKEN)

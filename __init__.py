@@ -1,2 +1,2 @@
-__all__ = ["assistant", "dice"]
+__all__ = ["assistant"]
 
