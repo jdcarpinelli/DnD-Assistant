@@ -2,29 +2,18 @@
 from random import randint
 from os import system
 
+# List of acceptable rolls
+dnd_die = [4, 6, 8, 10, 12, 20]
 
-def debug(arg):
-    print('Arguments: ', *parse(arg), '\n')
-
-def parse(arg):
-    'Convert a series of zero or more numbers to an argument tuple'
-    return tuple(arg.split())
-
-def initiate_roll(arg_list):
-    print(parse(arg_list))
-
-def roll(self, arg):
-    rolls = []
-    for die in range(num_dice):
-        rolls.append(randint(1,n))
-
-    return rolls
-
-def roll_to_str(self, arg):
-    roll_str = ''
-    for die in range(len(num_list) - 1):
-        roll_str += (str(num_list[die]))
-        roll_str += (', ')
+def initiate_roll(args):
+    ret_str = ''
+    for arg in args:
+        ret_str += arg + ', '
+    return ret_str
     
-    roll_str += (str(num_list[-1]))
+def roll(num_die, die_num):
+    roll_str = []
+    for die in range(1, num_die):
+        roll_str += str(randint(1,die_num))
     return roll_str
+

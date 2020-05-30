@@ -45,7 +45,7 @@ async def on_ready():
 @bot.event
 async def on_error(event, *args, **kwargs):
     with open(
-        TOP_LEVEL_PATH + 'assistant/logs/err' + get_timestamp() + '.log', 
+        TOP_LEVEL_PATH + 'assistant/logs/errors/err' + get_timestamp() + '.log', 
         'a'
     ) as f:
         if event == 'on_message':
@@ -61,28 +61,19 @@ async def on_command_error(ctx, error):
         if error == error_type:
             print('ERROR: ', error_type)
     await ctx.send(
-        'Invalid argument. '
-        'Use "!help command" to find the proper usage.\n'+str(error_type))
-
-# Silly function
-@bot.command(name='99', help='Responds with a random quote from Brooklyn 99')
-async def nine_nine(ctx):
-    brooklyn_99_quotes = [
-        'I\'m the human form of the 💯 emoji.',
-        'Bingpot!',
-        (
-            'Cool. Cool cool cool cool cool cool cool, '
-            'no doubt no doubt no doubt no doubt.'
-        ),
-    ]
-
-    response = random.choice(brooklyn_99_quotes)
-    await ctx.send(response)
+        'Whoops! The roll command wasn\'t used correctly.'
+        'Try using the same format as the examples in "!help roll"'
+    )
 
 # Roll dice
-@bot.command(name='roll', help='Rolls 4, 6, 8, 10, 12, or 20 sided die.\n Examples: !roll 20 or !roll 3d6')
-async def roll(ctx, *args):   
-    await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
+@bot.command(
+    name='roll', 
+    help='Rolls 4, 6, 8, 10, 12, or 20 sided die.\n'
+    'Examples:\n'
+    'Roll a single 20-sided die:\t!roll 20\n'
+    'Roll three 6-sided die:\t\t!roll 3d6\n')
+async def roll(ctx, *args): 
+    await ctx.send(dice.initiate_roll(args))
 
 if __name__ == '__main__':
     bot.run(TOKEN)
