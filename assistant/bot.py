@@ -25,9 +25,16 @@ TOP_LEVEL_PATH = os.getenv('TOP_LEVEL_PATH')
 AUTHOR = os.getenv('AUTHOR')
 
 # Bot invalid command messages
-INVALID_CMD = \
+INVALID_ROLL_CMD = \
     'Whoops! The roll command wasn\'t used correctly.\n' \
     'Try using the same format as the examples in "!help roll".'
+INVALID_TELL_CMD = \
+    'Whoops! The tell command wasn\'t used correctly.\n' \
+    'Try using the same format as the examples in "!help tell".'
+INVALID_TELL_MSG = \
+    'This command requires a non-blank message.'
+INVALID_TELL_RECIPIENT = \
+    'The user you requested was not found in the server.'
 INTERNAL_BUG = \
     f'Congrats! That command you just sent resulted in an internal bug! ' \
     f'Sorry about that, this was {AUTHOR}\'s first attempt at a Bot. ' \
@@ -42,7 +49,8 @@ def get_timestamp():
 
 
 # Create bot
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='!', disable_everyone=False)
+
 
 # On startup
 @bot.event
@@ -70,7 +78,7 @@ async def on_error(event, *args, **kwargs):
 @bot.event
 async def on_command_error(ctx, error):
     # Print to stderr
-    print(INTERNAL_BUG, file=sys.stderr)
+    print('\n\n' + INTERNAL_BUG + '\n\n')
     
     # Log real error
     with open(
@@ -146,34 +154,91 @@ async def intro(ctx, *args):
 # Roll dice
 @bot.command(
     name='roll', 
+    aliases=['r'],
     help='Rolls 4, 6, 8, 10, 12, or 20 sided die.\n\n'
     'Examples:\n'
     'Roll a single 20-sided die:\t\t!roll 20\n'
     'Roll three 6-sided die:\t\t\t!roll 3d6\n'
-    '"!r" serves as a shortcut for "!roll:\t !r 20\n')
+    '"!r" serves as a shortcut for "!roll:\t!r 20\n')
 async def roll(ctx, *args): 
     success, msg = dice.roll_request(args)
 
     if success:
         await ctx.send('Roll returned: ' + str(msg))
     else:
-        await ctx.send(INVALID_CMD + '\n' + str(msg))
+        await ctx.send(INVALID_ROLL_CMD + '\n' + str(msg))
 
-# Roll dice
+
+# Relay a message
 @bot.command(
-    name='r', 
-    help='Rolls 4, 6, 8, 10, 12, or 20 sided die.\n\n'
-    'Examples:\n'
-    'Roll a single 20-sided die:\t\t!roll 20\n'
-    'Roll three 6-sided die:\t\t\t!roll 3d6\n'
-    '"!r" serves as a shortcut for "!roll:\t !r 20\n')
-async def roll(ctx, *args): 
-    success, msg = dice.roll_request(args)
+    name = 'tell',
+    help = \
+    f'Relay a message to someone else on this server.\n\n'
+    f'Examples:\n'
+    f'Tell {AUTHOR} have a great day: !tell @jodoca have a great day!'
+)
+async def tell(ctx, recipient: str, *message):
+    ## Argument checking
+    #  Usage:
+    #  !tell @user message without any quotes  
 
-    if success:
-        await ctx.send('Roll returned: ' + str(msg))
+    guild = discord.utils.get(bot.guilds, name=GUILD)
+    if guild is None:
+        await ctx.send(INTERNAL_BUG)
+        return
+    
+    ## Argument checking
+
+    # Re-construct message
+    msg = ''
+    for m in message:
+        msg += m + ' '
+    
+    # Recipient and message should not be empty
+    if '@' not in recipient \
+        or recipient == '' \
+            or msg == '':
+        await ctx.send(INVALID_TELL_CMD + '\n' + INVALID_TELL_MSG)
+
+    # Check if recipient is @everyone or a user
+    all_recipients = []
+    if recipient == '@everyone':
+        all_recipients = [user for user in guild.members if user != bot.user]
     else:
-        await ctx.send(INVALID_CMD + '\n' + str(msg))
+        # Remove special characters, left with id or name
+        recipient_parsed = recipient\
+            .replace('@','')\
+            .replace('<','')\
+            .replace('>','')\
+            .replace('!','')
+
+        for user in [user for user in guild.members if user != bot.user]:
+            if (recipient_parsed == user.name) \
+                or (recipient_parsed == str(user.id)):
+                all_recipients.append(user)
+
+    if len(all_recipients) == 0:
+        await ctx.send(INVALID_TELL_RECIPIENT)
+        return
+
+    ## Context checking
+    #  If command in DM, DM recipient
+    if ctx.message.channel.type == discord.ChannelType.private:
+        for user in all_recipients:
+            await user.send('<@!' + str(ctx.author.id) + '> says: ' + msg)
+        await ctx.send('Sent!')
+        return
+
+    #  Otherwise, just post wherever this was posted
+    else:
+        recipient_str = ''
+        for user in all_recipients:
+            recipient_str += ('<@!' + str(user.id) + '> ')
+        await ctx.send(
+            f'Hey {recipient_str}, {ctx.author.name} says: {msg}'
+        )
+        return
+
 
 
 if __name__ == '__main__':
