@@ -68,4 +68,3 @@ pipenv shell
 # Run the bot
 python assistant/bot.py
 ```
-```
